@@ -1,3 +1,201 @@
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 0;
+}
+
+:root {
+  --main-bg-colour: #222;
+  --main-fg-colour: white;
+  --main-select-colour: #FCED6F;
+  --sans-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --monospace-font: "Share Tech Mono", monospace;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: var(--sans-font);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='10' cy='10' r='1' fill='rgba(60,60,60)'></circle></svg>");
+  background-color: var(--main-bg-colour);
+  color: white;
+  font-size: 13px;
+}
+
+.node {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px solid var(--main-fg-colour);
+  border-radius: 4px;
+  padding: 5px 6px;
+  background-color: var(--main-bg-colour);
+  cursor: grab;
+  text-transform: uppercase;
+  transition: transform 120ms ease-out;
+  font-family: var(--monospace-font);
+  -webkit-user-select: none;
+}
+
+.node.dragging {
+  transform: translate(-2px, -2px);
+  box-shadow: rgba(20, 20, 20, 0.3) 3px 3px 3px;
+  cursor: grabbing;
+}
+.node.selected {
+  border: 2px solid var(--main-select-colour);
+}
+
+/* TODO: don't mark self */
+.wiring.out .port.in, .wiring.in .port.out  {
+  background-color: var(--main-bg-colour);
+  border: solid 2px var(--main-select-colour);
+  border-radius: 0;
+}
+
+.port {
+  width: 10px;
+  height: 10px;
+  border-radius: 100%;
+  background-color: var(--main-bg-colour);
+  border: solid 2px var(--main-fg-colour);
+  position: absolute;
+  cursor: default;
+}
+
+.port:hover {
+  transform: scale(1.3);
+}
+
+.port.in {
+  position: absolute;
+  top: 34px;
+  left: -6px;
+}
+
+.port.out {
+  position: absolute;
+  top: 34px;
+  right: -6px;
+}
+
+.wires {
+  width: 98vw;
+  height: 97vh;
+}
+
+.wire {
+  fill: transparent;
+  stroke-width: 2; 
+  stroke: #777;
+  stroke-dasharray: 2,5; 
+  stroke-dashoffset: 250;
+  stroke-linejoin: round;
+  animation: ants 66s linear infinite;
+}
+.wire-bg {
+  fill: transparent;
+  stroke-width: 2; 
+  stroke: var(--main-bg-colour);
+}
+
+.wire.temp {
+  stroke-dasharray:0,0;
+  stroke: var(--main-select-colour);
+}
+
+.wire-hitbox {
+  fill: transparent;
+  stroke-width: 20; 
+  stroke: rgba(0,0,0,0.001);
+}
+
+.hidden {
+  fill: transparent;
+  stroke: transparent;
+  pointer-events: none;
+}
+
+.wire-hitbox:hover + .hidden {
+  fill: white;
+  box-shadow: rgba(22, 22, 22, 1) 3px 3px 5px;
+}
+
+.command-menu {
+  position: absolute;
+  width: 380px;
+  height: 303px;
+  top: calc(50vh - 150px);
+  left: calc(50vw - 190px);
+  background-color: rgb(20,20,20);
+  border-radius: 6px;
+  box-shadow: rgba(20, 20, 20, 0.18) 3px 3px 5px;
+  padding: 15px 7px 15px 15px;
+  font-size: 15px;
+}
+
+.command-menu-wrapper {
+  overflow-y: auto;
+  height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77,77,77) rgb(20,20,20);
+}
+
+.command-menu li {
+  margin: 0 0 2px 0;
+  list-style: none;
+  line-height: 1.5em;
+  padding: 5px 10px;
+  border-radius: 3px;
+}
+
+.command-menu li:hover, .command-menu li:first-of-type {
+  background-color: rgb(33,34,34)
+}
+
+@keyframes ants { to { stroke-dashoffset: 0;} }
+
+pre {
+  font-family: var(--monospace-font);
+}
+
+.pprint {
+  position: absolute;
+  right: 15px;
+  bottom: 10px;
+  opacity: 0.2;
+}
+.pprint:hover{
+  opacity: 1;
+}
+
+.presets {
+  position: absolute;
+  width: 300px;
+  height: 100vh;
+  background-color: var(--main-bg-color);
+}
+
+.cmdk-but {
+  position: absolute;
+  bottom: 22px;
+  opacity: 0.2;
+  left: calc(50%);
+}
+.cmdk-but:hover {
+  opacity: 1;
+  cursor: pointer;
+}
+
+body::-webkit-scrollbar {
+  width: 11px;
+}
+.command-menu::-webkit-scrollbar-track {
+  background: var(--scrollbarBG);
+}
+body::-webkit-scrollbar-thumb {
+  background-color: var(--thumbBG) ;
+  border-radius: 6px;
+  border: 3px solid var(--scrollbarBG);
 }

@@ -87,6 +87,11 @@
   [db event] 
   (delete-node db))
 
+(defmethod keyboard-action ["k" true]
+  [db event] 
+  (.preventDefault event)
+  (rf/dispatch [:app/open-modal :command]))
+
 (reg-event-db :keyup
   (fn [db [_ event]]             
     (keyboard-action db event)))

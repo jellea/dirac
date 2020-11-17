@@ -131,9 +131,9 @@
      (with-out-str (cljs.pprint/pprint patch))]))
 
 (defn keyboard-shortcuts []
-  (r/with-let [handler #(rf/dispatch [:keyup %])
-	       _ (js/document.addEventListener "keyup" handler)]
-    (finally (.removeEventListener js/document "keyup" handler))))
+  (r/with-let [handler #(rf/dispatch-sync [:keyup %])
+	       _ (js/document.addEventListener "keydown" handler)]
+    (finally (.removeEventListener js/document "keydown" handler))))
 
 (defn command-item-ui [n]
   [:li {:on-click #(do (rf/dispatch [:node/add n])

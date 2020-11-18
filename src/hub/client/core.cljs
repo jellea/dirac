@@ -7,19 +7,19 @@
             [hub.client.subs]))
 
 (def node-ports {;; ins
-                 :midi-in [:out]
-                 :cv-in [:out]
-                 :hid-in [:out]
+                 :type/midi-in [:out]
+                 :type/cv-in [:out]
+                 :type/hid-in [:out]
                  ;; manip
-                 :filter [:in :out]
-                 :remap [:in :out]
-                 :script [:in :out]
-                 :switch [:in :out]
-                 :spread [:in :out]
+                 :type/filter [:in :out]
+                 :type/remap [:in :out]
+                 :type/script [:in :out]
+                 :type/switch [:in :out]
+                 :type/spread [:in :out]
                  ;; outs
-                 :cv-out [:in]
-                 :dmx-out [:in]
-                 :midi-out [:in]})
+                 :type/cv-out [:in]
+                 :type/dmx-out [:in]
+                 :type/midi-out [:in]})
 
 (def grid-size 20)
 
@@ -37,7 +37,7 @@
   {:x (+ 10 (* x 20))
    :y (+ 10 (* y 20))})
 
-(defn node-ui [id {:keys [node-type x y config] :as n}]
+(defn node-ui [[node-type nid :as id] {:keys [x y config] :as n}]
   [:div.node {:style {:top (-> (node-pos n) :y)
                       :left (-> (node-pos n) :x)}
               :class [(when @(rf/subscribe [:node/dragging? id]) "dragging")
@@ -69,10 +69,10 @@
          " L" (+ 32 mx) "," (+ by 33)
          " L" (- bx 7) "," (+ by 33))))
 
-(defn wire-ui [[a b]]
+(defn wire-ui [[id {:keys [from to]} :as w]]
   (let [patch @(rf/subscribe [:patch])
-        {ax :x ay :y :as a*} (-> (get-in patch [:nodes a]) node-pos)
-        {bx :x by :y :as b*} (-> (get-in patch [:nodes b]) node-pos)
+        {ax :x ay :y :as a*} (-> (get-in patch [:entities (:key from)]) node-pos)
+        {bx :x by :y :as b*} (-> (get-in patch [:entities (:key to)]) node-pos)
         {mx :x my :y} (middle-pos a* b*)
         path (make-path a* b*)]
     [:<>
@@ -81,7 +81,7 @@
      [:path.wire-hitbox {:d path
                          :on-click #(do
                                       (rf/dispatch [:patcher/set-coords mx my])
-                                      (rf/dispatch [:app/open-modal :command {:wire [a b]}]))}]
+                                      (rf/dispatch [:app/open-modal :command {:wire w}]))}]
      [:path.hidden {:d "M6.42857 8.57143V15L8.57143 15V8.57143L15 8.57143L15 6.42857L8.57143 6.42857V0H6.42857V6.42857L0 6.42857V8.57143L6.42857 8.57143Z"
                     :transform (str "translate(" (+ 24.5 mx) " " (+ 25 my) ")")}]]))
 
@@ -96,7 +96,8 @@
 (defn patcher-ui []
   (let [patch @(rf/subscribe [:patch])
         {:keys [node-id coords port] :as wiring} @(rf/subscribe [:patcher/wiring])
-        wires (:wires patch)]
+        wires (filter (fn [[[t]]] (= t :type/wire)) (:entities patch))
+        nodes (filter (fn [[[t]]] (not= t :type/wire)) (:entities patch))]
     [:div.patcher {:class (cond-> []
                                   node-id (conj "wiring" port))
                    :on-mouse-up #(do
@@ -113,7 +114,7 @@
        [:div.nodes]
        (map
          (fn [[id node]] [node-ui id node])
-         (:nodes patch)))
+         nodes))
      [:svg.wires
       (into
         [:<>]
@@ -121,7 +122,7 @@
           (fn [w] [wire-ui w])
           wires))
       (when coords
-        [:path.wire.temp {:d (make-path (-> (get-in patch [:nodes node-id]) node-pos)
+        [:path.wire.temp {:d (make-path (-> (get-in patch [:entities node-id]) node-pos)
                                         coords)}])]]))
 
 (defn debug-ui []

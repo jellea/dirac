@@ -1,5 +1,5 @@
-(ns app.events
-  (:require [app.specs]
+(ns hub.client.events
+  (:require [hub.client.specs]
             [re-frame.core :as rf :refer [reg-event-db]]))
               
 

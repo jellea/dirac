@@ -19,13 +19,18 @@
     "clean-win": "rmdir /s /q public/js & rmdir /s /q target"
   },
   "dependencies": {
+    "concat-stream": "2.0.0",
     "cookies": "0.8.0",
     "create-react-class": "^15.6.3",
     "easymidi": "2.0.1",
+    "etag": "1.8.1",
     "highlight.js": "9.18.1",
+    "multiparty": "4.2.2",
+    "qs": "6.9.4",
     "random-bytes": "1.0.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
+    "simple-encryptor": "4.0.0",
     "xregexp": "4.4.0"
   },
   "devDependencies": {

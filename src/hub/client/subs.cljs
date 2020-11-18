@@ -1,4 +1,4 @@
-(ns app.subs
+(ns hub.client.subs
   (:require [re-frame.core :refer [reg-sub]]))
 
 (reg-sub :patch

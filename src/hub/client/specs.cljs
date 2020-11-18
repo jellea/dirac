@@ -1,4 +1,4 @@
-(ns app.specs
+(ns hub.client.specs
   (:require [clojure.spec.alpha :as s]))
 
 ;; How to test the integretity of the wires, so they make sense?

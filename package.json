@@ -21,6 +21,7 @@
   "dependencies": {
     "cookies": "0.8.0",
     "create-react-class": "^15.6.3",
+    "easymidi": "2.0.1",
     "highlight.js": "9.18.1",
     "random-bytes": "1.0.0",
     "react": "^16.5.2",

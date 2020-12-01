@@ -8,24 +8,39 @@
 ;; WIRE
 (defmethod ig/init-key :type/wire [[_ id] {:keys [from to] :as config}]
   (go-loop []
-           (let [incoming-message (<! (:output from))]
+           (when-let [incoming-message (<! (:output from))]
+             (prn [:wire incoming-message])
              (>! (:input to) incoming-message))
-           (recur)))
+           (recur))
+  config)
+
+(defmethod ig/halt-key! :type/wire [_ {}]
+  (prn [:killed-wire]))
+
+(defmethod ig/resume-key :type/wire [_ config]
+  (prn [:resume-wire])
+  config)
 
 ;; FILTER
 (defmethod ig/prep-key :type/filter [_ config]
-  (merge {:input (create-chan) :output (create-chan)} config))
+  (assoc config :input (create-chan) :output (create-chan)))
 
 (defmethod ig/init-key :type/filter [[_ id] {:keys [input output channels] :as config}]
   (go-loop []
-           (let [incoming (<! input)]
-             ;(prn [:filter  incoming])
-             (if (some #{(.-channel incoming)} channels)
+           (when-let [incoming (<! input)]
+             (prn [:filter! incoming])
+             (when (some #{(.-channel incoming)} channels)
+               (prn [:filter! channels])
                (>! output incoming)))
            (recur))
   config)
 
 (defmethod ig/halt-key! :type/filter [_ {:keys [input output] :as config}]
   (close! input)
-  (close! output))
+  (close! output)
+  (prn [:killed-filter]))
 
+(defmethod ig/resume-key :type/filter [key config old-config old-impl]
+  config)
+  ;(prn [:resume-filter config old-config old-impl]))
+  ;(reset! (:channels old-impl) (:channels config)))

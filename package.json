@@ -20,11 +20,13 @@
   },
   "dependencies": {
     "concat-stream": "2.0.0",
+    "content-type": "1.0.4",
     "cookies": "0.8.0",
     "create-react-class": "^15.6.3",
     "easymidi": "2.0.1",
     "etag": "1.8.1",
     "highlight.js": "9.18.1",
+    "lru": "3.1.0",
     "multiparty": "4.2.2",
     "qs": "6.9.4",
     "random-bytes": "1.0.0",

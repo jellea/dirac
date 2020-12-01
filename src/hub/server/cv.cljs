@@ -5,11 +5,15 @@
 
 ;; CV OUT
 (defmethod ig/prep-key :type/cv-out [_ config]
-  (merge {:input (chan (sliding-buffer 16))} config))
+  (assoc config :input (chan (sliding-buffer 16))))
 
 (defmethod ig/init-key :type/cv-out [[_ id] {:keys [input] :as config}]
   (go-loop []
-           (let [incoming (<! input)])
-             ;(prn [:cv-out incoming]))
+           (when-let [incoming (<! input)]
+             (prn [:cv-out incoming]))
            (recur))
+  config)
+
+(defmethod ig/resume-key :type/cv-out [_ config]
+  (prn [:resume-cv-out config])
   config)

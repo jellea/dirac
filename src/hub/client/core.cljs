@@ -135,7 +135,7 @@
                _ (js/document.addEventListener "keydown" handler)]
               (finally (.removeEventListener js/document "keydown" handler))))
 
-(defn command-item-ui [n]
+(defn command-item-ui [i n]
   [:li {:on-click #(do (rf/dispatch [:node/add n])
                        (rf/dispatch [:app/open-modal nil]))}
    n])
@@ -148,7 +148,7 @@
     [:div.command-menu
      (into
        [:div.command-menu-wrapper]
-       (map (fn [n] [command-item-ui n]) suggestions))]))
+       (map-indexed (fn [i n] [command-item-ui i n]) suggestions))]))
 
 (defn cmdk-button []
   [:img.cmdk-but {:src "cmdk.svg"

@@ -121,6 +121,20 @@
   (.preventDefault event)
   (rf/dispatch [:app/open-modal :command]))
 
+(defmethod keyboard-action ["Escape" false]
+  [db event]
+  (.preventDefault event)
+  (rf/dispatch [:node/select nil])
+  (rf/dispatch [:app/open-modal nil]))
+
+(defmethod keyboard-action ["ArrowDown" false]
+  [db event]
+  (.preventDefault event))
+
+(defmethod keyboard-action ["ArrowUp" false]
+  [db event]
+  (.preventDefault event))
+
 (reg-event-db :keyup
   (fn [db [_ event]]             
     (keyboard-action db event)))

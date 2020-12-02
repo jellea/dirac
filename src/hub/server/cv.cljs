@@ -10,8 +10,8 @@
 (defmethod ig/init-key :type/cv-out [[_ id] {:keys [input] :as config}]
   (go-loop []
            (when-let [incoming (<! input)]
-             (prn [:cv-out incoming]))
-           (recur))
+             (prn [:cv-out incoming])
+             (recur)))
   config)
 
 (defmethod ig/resume-key :type/cv-out [_ config]

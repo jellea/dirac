@@ -23,16 +23,25 @@
   (-> @!patch :entities ig/prep (ig/resume @!system) ((partial reset! !system))))
 
 (defn restart! []
-  (ig/halt! @!system))
+  (ig/halt! @!system)
+  (prn ["haltes"]))
   ;(init!))
 
 (defn stop! []
-  (ig/halt! @!system))
+  (try
+    (ig/halt! @!system)
+    (catch :default e
+      (prn [:something e])))
+  (reset! !system nil))
+
+;(ig/halt-key! [:type/midi-in :node/ud90ba0ed-1d99-4a09-9755-8081e5160d75] {})
 
 
 (comment
   (stop!)
   (stop!)
+
+  (prn [:still-works])
 
   @!patch
 

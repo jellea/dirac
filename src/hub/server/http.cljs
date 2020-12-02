@@ -43,6 +43,7 @@
 
 (defn override-current-patch [req res raise]
   ;; Do something
+  (prn [:override-cure!])
   (when-let [new-patch (->> req :body)]
     (reset! !patch new-patch)
     (h.patch/restart!)

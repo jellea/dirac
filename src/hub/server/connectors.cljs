@@ -1,21 +1,23 @@
 (ns hub.server.connectors
   (:require [integrant.core :as ig]
             [cljs.core.async :refer [chan put! take! >! <! buffer sliding-buffer timeout close! alts!]]
+            [async-error.core :refer-macros [go-try <?]]
             [cljs.core.async :refer-macros [go go-loop alt!]]))
 
 (defn create-chan [] (chan (sliding-buffer 16)))
 
 ;; WIRE
 (defmethod ig/init-key :type/wire [[_ id] {:keys [from to] :as config}]
-  (go-loop []
-           (when-let [incoming-message (<! (:output from))]
-             (prn [:wire incoming-message])
-             (>! (:input to) incoming-message))
-           (recur))
-  config)
+  (go-try
+    (loop []
+      (when-let [incoming-message (some-> from :output <?)]
+        (prn [:wire incoming-message])
+        (some-> to :input (>! incoming-message))
+        (recur)))))
 
-(defmethod ig/halt-key! :type/wire [_ {}]
-  (prn [:killed-wire]))
+(defmethod ig/halt-key! :type/wire [_ chan]
+  (prn [:hca chan])
+  (some-> chan close!))
 
 (defmethod ig/resume-key :type/wire [_ config]
   (prn [:resume-wire])
@@ -26,18 +28,21 @@
   (assoc config :input (create-chan) :output (create-chan)))
 
 (defmethod ig/init-key :type/filter [[_ id] {:keys [input output channels] :as config}]
-  (go-loop []
-           (when-let [incoming (<! input)]
-             (prn [:filter! incoming])
-             (when (some #{(.-channel incoming)} channels)
-               (prn [:filter! channels])
-               (>! output incoming)))
-           (recur))
+  (go-try
+    (loop []
+      (prn [:looping-filter])
+      (when-let [incoming (<? input)]
+        (prn [:filter! incoming])
+        (when (some #{(.-channel incoming)} channels)
+          (prn [:filter! channels])
+          (>! output incoming))
+        (recur))))
   config)
 
 (defmethod ig/halt-key! :type/filter [_ {:keys [input output] :as config}]
-  (close! input)
-  (close! output)
+  (prn [:killing-filter])
+  (some-> input close!)
+  (some-> output close!)
   (prn [:killed-filter]))
 
 (defmethod ig/resume-key :type/filter [key config old-config old-impl]

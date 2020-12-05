@@ -2,88 +2,15 @@
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
             [re-frame.core :as rf]
+            [day8.re-frame.http-fx]
             [cljs.pprint]
             [hub.client.events]
-            [hub.client.subs]))
-
-(def node-ports {;; ins
-                 :type/midi-in [:out]
-                 :type/cv-in [:out]
-                 :type/hid-in [:out]
-                 ;; manip
-                 :type/filter [:in :out]
-                 :type/remap [:in :out]
-                 :type/script [:in :out]
-                 :type/switch [:in :out]
-                 :type/spread [:in :out]
-                 ;; outs
-                 :type/cv-out [:in]
-                 :type/dmx-out [:in]
-                 :type/midi-out [:in]})
+            [hub.client.subs]
+            [hub.client.components.node.views :as h.node]
+            [hub.client.components.wire.views :as h.wire]
+            [hub.client.components.command-menu.views :as h.command-menu]))
 
 (def grid-size 20)
-
-(defn port-ui [id p]
-  [:div {:class ["port" (name p)]
-         :on-mouse-up #(do
-                         (.stopPropagation %)
-                         (when (some-> @(rf/subscribe [:patcher/wiring]) :node-id (not= id))
-                           (rf/dispatch [:node/add-wire id])
-                           (rf/dispatch [:node/start-wiring nil])))
-         :on-mouse-down #(do (.stopPropagation %)
-                             (rf/dispatch [:node/start-wiring {:node-id id :port p}]))}])
-
-(defn node-pos [{:keys [x y] :as n}]
-  {:x (+ 10 (* x 20))
-   :y (+ 10 (* y 20))})
-
-(defn node-ui [[node-type nid :as id] {:keys [x y config] :as n}]
-  [:div.node {:style {:top (-> (node-pos n) :y)
-                      :left (-> (node-pos n) :x)}
-              :class [(when @(rf/subscribe [:node/dragging? id]) "dragging")
-                      (when @(rf/subscribe [:node/selected? id]) "selected")]
-              :on-double-click #(do (.stopPropagation %)
-                                    (rf/dispatch [:app/open-modal :node-config]))
-              :on-mouse-down #(do
-                                (rf/dispatch [:node/select id])
-                                (rf/dispatch [:node/start-drag id]))
-              :on-mouse-up #(do
-                              (.stopPropagation %)
-                              (rf/dispatch [:node/start-drag nil]))}
-   [:span node-type]
-   (into
-     [:div.ports]
-     (map (fn [p] [port-ui id p]) (node-ports node-type)))])
-
-(defn snap-to-grid [i]
-  (- (* (js/Math.floor (/ i 20)) 20) 10))
-
-(defn middle-pos [a b]
-  {:x (snap-to-grid (/ (+ (:x a) (:x b)) 2))
-   :y (/ (+ (:y a) (:y b)) 2)})
-
-(defn make-path [{ax :x ay :y :as a} {bx :x by :y :as b}]
-  (let [{mx :x my :y} (middle-pos a b)]
-    (str "M" (+ ax 70) "," (+ ay 33)
-         " L" (+ 32 mx) "," (+ ay 33)
-         " L" (+ 32 mx) "," (+ by 33)
-         " L" (- bx 7) "," (+ by 33))))
-
-(defn wire-ui [[id {:keys [from to]} :as w]]
-  (let [patch @(rf/subscribe [:patch])
-        {ax :x ay :y :as a*} (-> (get-in patch [:entities (:key from)]) node-pos)
-        {bx :x by :y :as b*} (-> (get-in patch [:entities (:key to)]) node-pos)
-        {mx :x my :y} (middle-pos a* b*)
-        path (make-path a* b*)]
-    [:<>
-     [:path.wire-bg {:d path}]
-     [:path.wire {:d path}]
-     [:path.wire-hitbox {:d path
-                         :on-click #(do
-                                      (rf/dispatch [:patcher/set-coords mx my])
-                                      (rf/dispatch [:app/open-modal :command {:wire w}]))}]
-     [:path.hidden {:d "M6.42857 8.57143V15L8.57143 15V8.57143L15 8.57143L15 6.42857L8.57143 6.42857V0H6.42857V6.42857L0 6.42857V8.57143L6.42857 8.57143Z"
-                    :transform (str "translate(" (+ 24.5 mx) " " (+ 25 my) ")")}]]))
 
 (defn mouse-move-handler [event]
   (when-let [{:keys [node-id port]} @(rf/subscribe [:patcher/wiring])]
@@ -113,16 +40,16 @@
      (into
        [:div.nodes]
        (map
-         (fn [[id node]] [node-ui id node])
+         (fn [[id n]] [h.node/node-ui id n])
          nodes))
      [:svg.wires
       (into
         [:<>]
         (map
-          (fn [w] [wire-ui w])
+          (fn [w] [h.wire/wire-ui w])
           wires))
       (when coords
-        [:path.wire.temp {:d (make-path (-> (get-in patch [:entities node-id]) node-pos)
+        [:path.wire.temp {:d (h.wire/make-path (-> (get-in patch [:entities node-id]) h.node/node-pos)
                                         coords)}])]]))
 
 (defn debug-ui []
@@ -133,41 +60,19 @@
 (defn keyboard-shortcuts []
   (r/with-let [handler #(rf/dispatch-sync [:keyup %])
                _ (js/document.addEventListener "keydown" handler)]
-              (finally (.removeEventListener js/document "keydown" handler))))
-
-(defn command-item-ui [i n]
-  [:li {:on-click #(do (rf/dispatch [:node/add n])
-                       (rf/dispatch [:app/open-modal nil]))}
-   n])
-
-(defn command-ui []
-  (let [modal @(rf/subscribe [:app/modal])
-        suggestions (cond
-                      (some-> modal :context :wire) (keep (fn [[k v]] (when (= (count v) 2) k)) node-ports)
-                      :else (keys node-ports))]
-    [:div.command-menu
-     (into
-       [:div.command-menu-wrapper]
-       (map-indexed (fn [i n] [command-item-ui i n]) suggestions))]))
-
-(defn cmdk-button []
-  [:img.cmdk-but {:src "cmdk.svg"
-                  :on-click #(rf/dispatch [:app/open-modal :command])}])
+    (finally (.removeEventListener js/document "keydown" handler))))
 
 (defn app []
   [:div.app
    [keyboard-shortcuts]
    [patcher-ui]
    [debug-ui]
-   [cmdk-button]
-   (when (= :command @(rf/subscribe [:app/modal-id])) [command-ui])])
+   [h.command-menu/cmdk-button]
+   (when (= :command @(rf/subscribe [:app/modal-id])) [h.command-menu/command-ui])])
 
-(defn ^:dev/after-load start
-  []
-  (rdom/render [app]
-               (.getElementById js/document "app")))
+(defn ^:dev/after-load start []
+  (rdom/render [app] (.getElementById js/document "app")))
 
-(defn ^:export init
-  []
+(defn ^:export init []
   (rf/dispatch [:init-db])
   (start))

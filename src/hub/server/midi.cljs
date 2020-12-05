@@ -11,20 +11,21 @@
 ;; MIDI IN
 (defmethod ig/prep-key :type/midi-in [_ config]
   (assoc config :output (create-chan)
-                :midi-input (midi.Input. "IAC Driver Bus 1"))) #_(-> (midi.getInputs) first (midi.Input.))
+                :midi-input (midi.Input. "IAC Driver Bus 1")))
 
 (defmethod ig/init-key :type/midi-in [[_ id] {:keys [midi-input output] :as config}]
   (.on ^js/midi.Input. midi-input "noteon"
        (fn [msg]
-         (prn [:inc msg])
+         (prn [:midi-in msg])
          ;(js/console.log 1 (.now (.-performance perf_hooks)))
-         (go-try (>! output msg))))
+         (go-try
+           (>! output msg))))
   config)
 
 (defmethod ig/halt-key! :type/midi-in [id {:keys [midi-input output] :as config}]
   (some-> midi-input .removeAllListeners)
   (some-> midi-input .close)
-  (some-> output close!)
+  ;(some-> output close!)
   (prn [:halt-midi-in]))
 
 (defmethod ig/resume-key :type/midi-in [_ {:keys [output] :as config}]
@@ -40,7 +41,7 @@
   (go-try
     (loop []
       (when-let [incoming (<? input)]
-        (prn [:inc! incoming])
+        (prn [:mini-out! incoming])
         (.send ^js/midi.Input. midi-output "noteon" incoming)
         ;(js/console.log 2 (.now (.-performance perf_hooks)))
         (recur))))
@@ -48,7 +49,7 @@
 
 (defmethod ig/halt-key! :type/midi-out [_ {:keys [input midi-output node-loop] :as config}]
   (prn [:midi-out config])
-  (close! input)
+  ;(close! input)
   ;(close! node-loop)
   (.close midi-output)
   ;(some-> input close!)

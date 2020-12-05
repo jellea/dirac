@@ -2,9 +2,14 @@
   (:require [integrant.core :as ig]
             [hub.client.specs]
             [medley.core :refer [map-kv]]
-            [re-frame.core :as rf :refer [reg-event-db]]))
+            [cognitect.transit :as t]
+            [ajax.core :as ajax]
+            [re-frame.core :as rf :refer [reg-event-db reg-event-fx]]))
 
 (def default-readers {'ig/ref ig/ref, 'ig/refset ig/refset})
+
+(def w (t/writer :json-verbose {:handlers {ig/Ref (t/write-handler (constantly "ig/ref") (fn [o] (:key o)))}}))
+(def r (t/reader :json-verbose {:handlers {"ig/ref" (t/read-handler (fn [k] (ig/ref k)))}}))
 
 (def patch
   {:version 2,
@@ -109,12 +114,31 @@
       (reroute-broken-wires db selected-node-id)
       (update-in [:patch :entities] dissoc selected-node-id))))
 
+
+(reg-event-fx :send-patch-to-server
+  (fn [{db :db}]
+    {:http-xhrio {:method :post
+                  :uri "/api/patch/current"
+                  :content-type "application/transit+json"
+                  :format (ajax/transit-request-format {:writer w
+                                                        :type :json})
+                  :response-format (ajax/transit-response-format {:read r
+                                                                  :type :json})
+                  :params (:patch db)}}))
+
+;; Shortcuts
+
 (defmulti keyboard-action (fn [db event] [(.-key event) (.-metaKey event)]))
 
 (defmethod keyboard-action ["Backspace" false]
   [db event]
   (.preventDefault event)
   (delete-node db))
+
+(defmethod keyboard-action ["Enter" true]
+  [db event]
+  (.preventDefault event)
+  (rf/dispatch [:send-patch-to-server]))
 
 (defmethod keyboard-action ["k" true]
   [db event] 
@@ -134,6 +158,10 @@
 (defmethod keyboard-action ["ArrowUp" false]
   [db event]
   (.preventDefault event))
+
+(defmethod keyboard-action :default
+  [db event]
+  db)
 
 (reg-event-db :keyup
   (fn [db [_ event]]             

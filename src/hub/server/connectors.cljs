@@ -6,18 +6,19 @@
 
 (defn create-chan [] (chan (sliding-buffer 16)))
 
+(defn log [x]
+  (prn [:logxxx x])
+  x)
+
 ;; WIRE
 (defmethod ig/init-key :type/wire [[_ id] {:keys [from to] :as config}]
   (go-try
     (loop []
+      ;(prn [:wire-conf config])
       (when-let [incoming-message (some-> from :output <?)]
-        (prn [:wire incoming-message])
+        ;(prn [:wire incoming-message])
         (some-> to :input (>! incoming-message))
         (recur)))))
-
-(defmethod ig/halt-key! :type/wire [_ chan]
-  (prn [:hca chan])
-  (some-> chan close!))
 
 (defmethod ig/resume-key :type/wire [_ config]
   (prn [:resume-wire])
@@ -30,22 +31,21 @@
 (defmethod ig/init-key :type/filter [[_ id] {:keys [input output channels] :as config}]
   (go-try
     (loop []
-      (prn [:looping-filter])
       (when-let [incoming (<? input)]
-        (prn [:filter! incoming])
-        (when (some #{(.-channel incoming)} channels)
-          (prn [:filter! channels])
-          (>! output incoming))
+        ;(prn [:filter! incoming])
+        (if (some #{(.-channel incoming)} channels)
+          (>! output incoming)
+          (prn "midi channel filter!"))
         (recur))))
   config)
 
 (defmethod ig/halt-key! :type/filter [_ {:keys [input output] :as config}]
   (prn [:killing-filter])
-  (some-> input close!)
-  (some-> output close!)
+  ;(some-> input close!)
+  ;(some-> output close!)
   (prn [:killed-filter]))
 
-(defmethod ig/resume-key :type/filter [key config old-config old-impl]
-  config)
+;(defmethod ig/resume-key :type/filter [key config old-config old-impl]
+;  config)
   ;(prn [:resume-filter config old-config old-impl]))
   ;(reset! (:channels old-impl) (:channels config)))

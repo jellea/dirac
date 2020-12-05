@@ -9,13 +9,16 @@
             [macchiato.middleware.restful-format :as rf]
             [macchiato.middleware.resource :refer [wrap-resource]]))
 
-
 (def w (t/writer :json {:handlers {ig/Ref (t/write-handler (constantly "ig/ref") (fn [o] (:key o)))}}))
-(def r (t/reader :json {:handlers {"ig/ref" (t/read-handler (fn [[a b]] [(ig/ref a) (ig/ref b)]))}}))
+(def r (t/reader :json {:handlers {"ig/ref" (t/read-handler (fn [[a b]] (ig/ref [a b])))}}))
+
+(defn log [x]
+  (prn [:logxxx x])
+  x)
 
 (defmethod rf/deserialize-request "application/transit+json"
   [{:keys [body]}]
-  (t/read r body))
+  (log (t/read r body)))
 
 (defn api-test [req res raise]
   (-> "Ack"
@@ -43,7 +46,7 @@
 
 (defn override-current-patch [req res raise]
   ;; Do something
-  (prn [:override-cure!])
+  (prn [:override-cure! req])
   (when-let [new-patch (->> req :body)]
     (reset! !patch new-patch)
     (h.patch/restart!)

@@ -13,39 +13,33 @@
                                        :to (ig/ref [:type/midi-out :node/u0f5343dd-edf8-4363-9c29-8b944c0788dd])}}})
 
 (defonce !patch (atom default))
-
 (defonce !system (atom nil))
 
 (defn init! []
-  (-> @!patch :entities ig/prep ig/init ((partial reset! !system))))
-
-(defn resume! []
-  (-> @!patch :entities ig/prep (ig/resume @!system) ((partial reset! !system))))
-
-(defn restart! []
-  (ig/halt! @!system)
-  (prn ["haltes"]))
-  ;(init!))
+  (prn [:init-system @!patch])
+  (try
+    (-> @!patch :entities ig/prep ig/init ((partial reset! !system)))
+    (catch :default e
+      (js/console.error "Error initialising system: " e)))
+  (prn [:initialised-system @!system]))
 
 (defn stop! []
   (try
-    (ig/halt! @!system)
+    (prn [:stopping-system @!system])
+    (some-> @!system ig/halt!)
+    (prn [:stopped-system])
+    (reset! !system nil)
     (catch :default e
-      (prn [:something e])))
-  (reset! !system nil))
+      (js/console.error "Error stopping system: " e))))
 
-;(ig/halt-key! [:type/midi-in :node/ud90ba0ed-1d99-4a09-9755-8081e5160d75] {})
-
+(defn restart! []
+  (stop!)
+  (init!))
 
 (comment
+  (cljs.pprint/pprint @!system)
+
+
   (stop!)
-  (stop!)
+  (init!))
 
-  (prn [:still-works])
-
-  @!patch
-
-  (init!)
-
-  @!patch
-  @!system)

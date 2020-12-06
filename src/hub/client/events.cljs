@@ -5,7 +5,7 @@
             [medley.core :refer [map-kv]]
             [cognitect.transit :as t]
             [ajax.core :as ajax]
-            [re-frame.core :as rf :refer [reg-event-db reg-event-fx]]))
+            [re-frame.core :as rf :refer [subscribe reg-event-db reg-event-fx]]))
 
 (def default-readers {'ig/ref ig/ref, 'ig/refset ig/refset})
 
@@ -46,7 +46,7 @@
           [wire-id wire-context] (some-> @(rf/subscribe [:app/modal]) :context :wire)
           norm (fn [i] (js/Math.floor (/ i 20)))
           new-node-id [(keyword "type" node-type) (keyword "node" (str "u" (random-uuid)))]
-          new-node (cond-> {} last-click (assoc :x (norm x) :y (norm y)))]
+          new-node (cond-> (or (h.db/default-props node-type) {}) last-click (assoc :x (norm x) :y (norm y)))]
       (cond->
         (assoc-in db [:patch :entities new-node-id] new-node)
         wire-context (->
@@ -116,8 +116,9 @@
 
 (defmethod keyboard-action ["Backspace" false]
   [db event]
-  (.preventDefault event)
-  (delete-node db))
+  (when @(subscribe [:node/selected-id])
+    (.preventDefault event)
+    (delete-node db)))
 
 (defmethod keyboard-action ["Enter" true]
   [db event]

@@ -11,7 +11,7 @@
   (let [modal @(rf/subscribe [:app/modal])
         suggestions (cond
                       (some-> modal :context :wire) (keep (fn [[k v]] (when (= (count v) 2) k)) h.node/node-ports)
-                      :else (keys h.node/node-ports))]
+                      :else (conj (keys h.node/node-ports) :type/comment))]
     [:div.command-menu
      (into
        [:div.command-menu-wrapper]

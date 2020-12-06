@@ -30,15 +30,13 @@
   {:x (+ 10 (* x 20))
    :y (+ 10 (* y 20))})
 
-(defn node-ui [[node-type nid :as id] {:keys [x y config] :as n}]
+(defn node-ui* [[node-type nid :as id] {:keys [x y config] :as n}]
   (let [dragging? @(rf/subscribe [:node/dragging? id])
         selected? @(rf/subscribe [:node/selected? id])]
     [:div.node {:style {:top (-> (node-pos n) :y)
                         :left (-> (node-pos n) :x)}
                 :class [(when dragging? "dragging")
                         (when selected? "selected")]
-                :on-double-click #(do (.stopPropagation %)
-                                      (rf/dispatch [:app/open-modal :node-config]))
                 :on-mouse-down #(do
                                   (rf/dispatch [:node/select id])
                                   (rf/dispatch [:node/start-drag id]))
@@ -65,3 +63,24 @@
                             [:label (name k)]
                             [:span (str v)]])
                {:cc false}))])]))
+
+(defn comment-ui [id {:keys [text] :as n}]
+  (let [{x :x y :y} (node-pos n)]
+    [:div.comment
+     {:style {:top y
+              :left x}
+      :content-editable true
+      :spellcheck "false"
+      :on-mouse-down #(do
+                        ;(.stopPropagation %)
+                        (rf/dispatch [:node/select id])
+                        (rf/dispatch [:node/start-drag id]))
+      :on-mouse-up #(do
+                      (.stopPropagation %)
+                      (rf/dispatch [:node/start-drag nil]))}
+     (str text)]))
+
+(defn node-ui [[node-type nid :as id] {:keys [x y config] :as n}]
+  (if (= node-type :type/comment)
+    [comment-ui id n]
+    [node-ui* id n]))

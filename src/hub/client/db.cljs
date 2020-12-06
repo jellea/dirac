@@ -20,4 +20,11 @@
      :to (ig/ref [:type/cv-out :node/u5023d5a3-17b9-4524-b91a-9c32474a7ce5])}}})
 
 (def default-props
-  {:type/filter {:channels [1]}})
+  {:type/filter {:channels [1]}
+   :type/comment {:text "This is a comment"}})
+
+(def props
+  {:type/filter {:channels []
+                 :notes []}
+   :type/midi-out {:device "bla"}
+   :type/midi-in {:device "bla"}})

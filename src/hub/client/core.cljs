@@ -32,10 +32,6 @@
                                    (rf/dispatch [:app/open-modal nil])
                                    (rf/dispatch [:node/start-drag nil])
                                    (rf/dispatch [:node/select nil]))
-                   :on-double-click #(do
-                                       (.preventDefault %)
-                                       (rf/dispatch [:patcher/set-coords (.-clientX %) (.-clientY %)])
-                                       (rf/dispatch [:app/open-modal :command]))
                    :on-mouse-move mouse-move-handler}
      (into
        [:div.nodes]
@@ -43,6 +39,12 @@
          (fn [[id n]] [h.node/node-ui id n])
          nodes))
      [:svg.wires
+      {:on-double-click #(do
+                           ;(.preventDefault %)
+                           (js/console.log (.-currentTarget %) (.-target %))
+                           (when (= (.-currentTarget %) (.-target %))
+                             (rf/dispatch [:patcher/set-coords (.-clientX %) (.-clientY %)])
+                             (rf/dispatch [:app/open-modal :command])))}
       (into
         [:<>]
         (map

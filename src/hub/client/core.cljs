@@ -65,10 +65,10 @@
 (defn app []
   [:div.app
    [keyboard-shortcuts]
+   (when (= :command @(rf/subscribe [:app/modal-id])) [h.command-menu/command-ui])
    [patcher-ui]
-   [debug-ui]
-   [h.command-menu/cmdk-button]
-   (when (= :command @(rf/subscribe [:app/modal-id])) [h.command-menu/command-ui])])
+   ;[debug-ui]
+   [h.command-menu/cmdk-button]])
 
 (defn ^:dev/after-load start []
   (rdom/render [app] (.getElementById js/document "app")))

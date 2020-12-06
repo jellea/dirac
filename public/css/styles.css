@@ -22,6 +22,9 @@ body {
   color: white;
   font-size: 13px;
 }
+.patcher {
+  position: absolute;
+}
 
 .node {
   position: absolute;
@@ -32,10 +35,12 @@ body {
   padding: 5px 6px;
   background-color: var(--main-bg-colour);
   cursor: grab;
-  text-transform: uppercase;
   transition: transform 120ms ease-out;
   font-family: var(--monospace-font);
   -webkit-user-select: none;
+}
+.node .type {
+  text-transform: uppercase;
 }
 
 .node.dragging {
@@ -44,6 +49,7 @@ body {
   cursor: grabbing;
 }
 .node.selected {
+  z-index: 100;
   border: 2px solid var(--main-select-colour);
 }
 
@@ -80,7 +86,50 @@ body {
   right: -6px;
 }
 
+.config {
+  position: absolute;
+  border-radius: 8px;
+  top: -20px;
+  left: 100px;
+  width: 261px;
+  background: linear-gradient(130deg, rgba(20,20,20,0.75) 0%, rgba(20,20,20,0.20) 100%);
+  backdrop-filter: blur(2px);
+  padding: 1px 20px 2px 30px;
+  text-shadow: 1px 1px 10px rgba(0,0,0,0.4);
+  box-shadow: rgba(20, 20, 20, 0.08) 3px 3px 5px;
+  transition: backdrop-filter 450ms ease-out, box-shadow 150ms ease-out;
+  animation: slide-right 120ms ease-out;
+}
+
+@keyframes slide-right { from {transform: translateX(-10px); opacity:0;} to {transform: translateX(0px); opacity: 1;} }
+
+
+.config:hover{
+  backdrop-filter: blur(3px) contrast(70%) brightness(60%);
+  box-shadow: rgba(20, 20, 20, 0.48) 5px 5px 15px;
+}
+
+.config ul {
+  list-style: none;
+  line-height: 20px;
+  margin: 20px 0;
+}
+
+.config ul.inactive li:hover {
+  opacity: 1;
+}
+
+.config ul.inactive li {
+  opacity: 0.3;
+}
+
+.config li label {
+  display: inline-block;
+  width: 90px;
+}
+
 .wires {
+  margin-top: 8px;
   width: 98vw;
   height: 97vh;
 }
@@ -92,7 +141,7 @@ body {
   stroke-dasharray: 2,5; 
   stroke-dashoffset: 250;
   stroke-linejoin: round;
-  animation: ants 66s linear infinite;
+  animation: ants 55s linear infinite;
 }
 .wire-bg {
   fill: transparent;
@@ -123,16 +172,24 @@ body {
 }
 
 .command-menu {
+  z-index: 200;
   position: absolute;
   width: 380px;
   height: 303px;
   top: calc(50vh - 150px);
   left: calc(50vw - 190px);
-  background-color: rgb(20,20,20);
-  border-radius: 6px;
+  background-color: rgba(20,20,20,0.75);
+  border-radius: 8px;
   box-shadow: rgba(20, 20, 20, 0.18) 3px 3px 5px;
   padding: 15px 7px 15px 15px;
   font-size: 15px;
+  backdrop-filter: blur(4px);
+}
+
+
+.command-menu ~ .patcher {
+  opacity: 0.40;
+  filter: blur(1px);
 }
 
 .command-menu-wrapper {
@@ -143,9 +200,9 @@ body {
 }
 
 .command-menu li {
-  margin: 0 0 2px 0;
+  margin: 0 6px 5px 0;
   list-style: none;
-  line-height: 1.5em;
+  height: 30px;
   padding: 5px 10px;
   border-radius: 3px;
 }

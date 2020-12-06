@@ -31,19 +31,37 @@
    :y (+ 10 (* y 20))})
 
 (defn node-ui [[node-type nid :as id] {:keys [x y config] :as n}]
-  [:div.node {:style {:top (-> (node-pos n) :y)
-                      :left (-> (node-pos n) :x)}
-              :class [(when @(rf/subscribe [:node/dragging? id]) "dragging")
-                      (when @(rf/subscribe [:node/selected? id]) "selected")]
-              :on-double-click #(do (.stopPropagation %)
-                                    (rf/dispatch [:app/open-modal :node-config]))
-              :on-mouse-down #(do
-                                (rf/dispatch [:node/select id])
-                                (rf/dispatch [:node/start-drag id]))
-              :on-mouse-up #(do
-                              (.stopPropagation %)
-                              (rf/dispatch [:node/start-drag nil]))}
-   [:span node-type]
-   (into
-     [:div.ports]
-     (map (fn [p] [port-ui id p]) (node-ports node-type)))])
+  (let [dragging? @(rf/subscribe [:node/dragging? id])
+        selected? @(rf/subscribe [:node/selected? id])]
+    [:div.node {:style {:top (-> (node-pos n) :y)
+                        :left (-> (node-pos n) :x)}
+                :class [(when dragging? "dragging")
+                        (when selected? "selected")]
+                :on-double-click #(do (.stopPropagation %)
+                                      (rf/dispatch [:app/open-modal :node-config]))
+                :on-mouse-down #(do
+                                  (rf/dispatch [:node/select id])
+                                  (rf/dispatch [:node/start-drag id]))
+                :on-mouse-up #(do
+                                (.stopPropagation %)
+                                (rf/dispatch [:node/start-drag nil]))}
+     [:span.type node-type]
+     (into
+       [:div.ports]
+       (map (fn [p] [port-ui id p]) (node-ports node-type)))
+
+     (when (and selected? (not dragging?))
+       [:div.config
+        (into
+          [:ul.active]
+          (map (fn [[k v]] [:li
+                            [:label (name k)]
+                            [:span (str v)]])
+               {:channels [1 2 3]
+                :notes [66 77 88]}))
+        (into
+          [:ul.inactive]
+          (map (fn [[k v]] [:li
+                            [:label (name k)]
+                            [:span (str v)]])
+               {:cc false}))])]))

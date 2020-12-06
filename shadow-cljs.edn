@@ -33,4 +33,4 @@
 
         :devtools {:http-root   "public"
                    :http-port   3000
-                   :preloads    [day8.re-frame-10x.preload]}}}}
+                   :preloads    [#_day8.re-frame-10x.preload]}}}}
